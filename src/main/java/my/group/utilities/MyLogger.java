@@ -1,4 +1,4 @@
-package my.group.Utilities;
+package my.group.utilities;
 
 import my.group.App;
 import org.slf4j.Logger;

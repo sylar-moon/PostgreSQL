@@ -1,22 +1,24 @@
 package my.group.DTO;
 
+import javax.validation.constraints.NotBlank;
+
 public class Good {
-    private String good_name;
+    private String goodName;
     private int typeId;
     private int brandId;
 
     public Good(String good_name, int typeId, int brandId) {
-        this.good_name = good_name;
+        this.goodName = good_name;
         this.typeId = typeId;
         this.brandId = brandId;
     }
-
-    public String getGood_name() {
-        return good_name;
+    @NotBlank (message = "Yor name good is blank")
+    public String getGoodName() {
+        return goodName;
     }
 
-    public void setGood_name(String good_name) {
-        this.good_name = good_name;
+    public void setGoodName(String goodName) {
+        this.goodName = goodName;
     }
 
     public int getTypeId() {
@@ -38,7 +40,7 @@ public class Good {
     @Override
     public String toString() {
         return "Good{" +
-                "good_name='" + good_name + '\'' +
+                "good_name='" + goodName + '\'' +
                 ", typeId=" + typeId +
                 ", brandId=" + brandId +
                 '}';

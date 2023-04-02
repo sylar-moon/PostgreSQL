@@ -1,4 +1,4 @@
-package my.group.Utilities;
+package my.group.utilities;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

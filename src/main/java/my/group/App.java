@@ -1,6 +1,6 @@
 package my.group;
 
-import my.group.Utilities.*;
+import my.group.utilities.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -17,21 +17,26 @@ import java.sql.SQLException;
 public class App {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private static final MyProperties PROPERTIES = new MyProperties();
-    public static final Table TABLE = new Table();
+    private static final Table TABLE = new Table();
+    private static final RPS RPS = new RPS();
     public static void main(String[] args) {
         readPropertyFile();
         String endPoint = PROPERTIES.getProperty("endPoint");
         String userName = PROPERTIES.getProperty("userName");
         String password = PROPERTIES.getProperty("password");
-
+        int countGoods =Integer.parseInt(PROPERTIES.getProperty("countGoods"));
+        String typeGood = args.length!=0?args[0]:"randomType";
         Connection connection = createConnection(endPoint,userName,password);
-
+        RPS.startWatch();
         DDLScript ddl = createDDLScript(connection);
         TABLE.createTables(ddl);
         TABLE.fillTables(connection);
-
-
-
+            TABLE.fillGoodsTable(connection,ddl,countGoods);
+        int indexType = TABLE.findIndexType(ddl,typeGood);
+        String addressStore = TABLE.getAddressStore(ddl,indexType);
+        RPS.stopWatch();
+        LOGGER.info(String.valueOf(RPS.getTimeSecond()));
+        LOGGER.info(addressStore);
         ddl.closeStatement();
         closeConnection(connection);
     }

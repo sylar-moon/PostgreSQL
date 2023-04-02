@@ -1,6 +1,6 @@
 package my.group;
 
-import my.group.Utilities.MyLogger;
+import my.group.utilities.MyLogger;
 import org.slf4j.Logger;
 
 import java.sql.*;
@@ -34,9 +34,12 @@ public class DDLScript {
         }
     }
 
-    public ResultSet executeQuery(String sql) {
+    public String executeQuery(String sql,String column) {
         try {
-            return statement.executeQuery(sql);
+            ResultSet resultSet =  statement.executeQuery(sql);
+            if (resultSet.next()) {
+                return resultSet.getString(column);
+            }
         } catch (SQLException e) {
             LOGGER.error("Unable to execute Query to Statement\n SQL request: {}", sql, e);
             System.exit(0);
