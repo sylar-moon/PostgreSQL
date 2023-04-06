@@ -63,6 +63,7 @@ public class Table {
 
     public void fillGoodsTable(Connection connection, DDLScript ddl, int countGoods) {
         rps.startWatch();
+        int sizeBatch = 1000;
         int idCounter = 0;
         int countTypes = getCountTable(ddl, "types");
         int countBrands = getCountTable(ddl, "brands");
@@ -72,22 +73,32 @@ public class Table {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             int counter = 0;
             while (counter != countGoods) {
-                rps.incrementCount();
                 counter++;
                 Good good = getGood(supplier);
                 if (validator.validateGood(good)) {
+                    rps.incrementCount();
+
                     idCounter++;
                     statement.setInt(1, idCounter);
                     statement.setString(2, good.getGoodName());
                     statement.setInt(3, good.getTypeId());
                     statement.setInt(4, good.getBrandId());
-                    statement.executeUpdate();
-                    deliverToStores(connection, countStores, idCounter);
+                    statement.addBatch();
+
+//                    deliverToStores(connection, countStores, idCounter);
+                    if(idCounter%sizeBatch==0){
+                        statement.executeBatch();
+                    }
+
                 }
             }
+            statement.executeBatch();
+
         } catch (SQLException e) {
             logger.error("Unable to fill goods table with sql query: {}", sql, e);
         }
+
+
         rps.stopWatch();
         logger.info(String.valueOf(rps.getRPS()));
 
@@ -123,25 +134,25 @@ public class Table {
      * @param ddl ddl script для передачи sql запроса
      */
     public void createTables(DDLScript ddl) {
-        ddl.executeUpdate("CREATE TABLE stores (\n" +
-                "  id INT,\n" +
-                "  city VARCHAR(20) NOT NULL,\n" +
-                "  address VARCHAR(100) NOT NULL,\n" +
-                "  CONSTRAINT stores_pk PRIMARY KEY (id)\n" +
-                ")");
-
-        ddl.executeUpdate("CREATE TABLE brands (\n" +
-                "  id INT,\n" +
-                "  name_brand VARCHAR(40) NOT NULL,\n" +
-                "  CONSTRAINT brands_pk PRIMARY KEY (id)\n" +
-                ")");
-
-        ddl.executeUpdate("CREATE TABLE types (\n" +
-                "  id INT,\n" +
-                "  name_type VARCHAR(40) NOT NULL,\n" +
-                "  CONSTRAINT types_pk PRIMARY KEY (id)\n" +
-                ")");
-        ddl.executeUpdate("CREATE INDEX name_type ON types (name_type)");
+//        ddl.executeUpdate("CREATE TABLE stores (\n" +
+//                "  id INT,\n" +
+//                "  city VARCHAR(20) NOT NULL,\n" +
+//                "  address VARCHAR(100) NOT NULL,\n" +
+//                "  CONSTRAINT stores_pk PRIMARY KEY (id)\n" +
+//                ")");
+//
+//        ddl.executeUpdate("CREATE TABLE brands (\n" +
+//                "  id INT,\n" +
+//                "  name_brand VARCHAR(40) NOT NULL,\n" +
+//                "  CONSTRAINT brands_pk PRIMARY KEY (id)\n" +
+//                ")");
+//
+//        ddl.executeUpdate("CREATE TABLE types (\n" +
+//                "  id INT,\n" +
+//                "  name_type VARCHAR(40) NOT NULL,\n" +
+//                "  CONSTRAINT types_pk PRIMARY KEY (id)\n" +
+//                ")");
+//        ddl.executeUpdate("CREATE INDEX name_type ON types (name_type)");
 
 
         ddl.executeUpdate("CREATE TABLE goods (\n" +
@@ -155,14 +166,14 @@ public class Table {
                 ")");
         ddl.executeUpdate("CREATE INDEX types_id ON goods (types_id)");
 
-        ddl.executeUpdate("CREATE TABLE store_good" +
-                "  (stores_id INT NOT NULL,\n" +
-                "  goods_id INT NOT NULL,\n" +
-                "  FOREIGN KEY(stores_id) REFERENCES stores(id),\n" +
-                "  FOREIGN KEY(goods_id) REFERENCES goods(id))"
-               );
-        ddl.executeUpdate("CREATE INDEX stores_id ON store_good (stores_id)");
-        ddl.executeUpdate("CREATE INDEX goods_id ON store_good (goods_id)");
+//        ddl.executeUpdate("CREATE TABLE store_good" +
+//                "  (stores_id INT NOT NULL,\n" +
+//                "  goods_id INT NOT NULL,\n" +
+//                "  FOREIGN KEY(stores_id) REFERENCES stores(id),\n" +
+//                "  FOREIGN KEY(goods_id) REFERENCES goods(id))"
+//               );
+//        ddl.executeUpdate("CREATE INDEX stores_id ON store_good (stores_id)");
+//        ddl.executeUpdate("CREATE INDEX goods_id ON store_good (goods_id)");
 
     }
 

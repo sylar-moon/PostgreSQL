@@ -27,16 +27,18 @@ public class App {
         int countGoods =Integer.parseInt(PROPERTIES.getProperty("countGoods"));
         String typeGood = args.length!=0?args[0]:"randomType";
         Connection connection = createConnection(endPoint,userName,password);
-        RPS.startWatch();
         DDLScript ddl = createDDLScript(connection);
         TABLE.createTables(ddl);
-        TABLE.fillTables(connection);
-            TABLE.fillGoodsTable(connection,ddl,countGoods);
-        int indexType = TABLE.findIndexType(ddl,typeGood);
-        String addressStore = TABLE.getAddressStore(ddl,indexType);
+//        TABLE.fillTables(connection);
+        RPS.startWatch();
+
+        TABLE.fillGoodsTable(connection,ddl,countGoods);
+//        int indexType = TABLE.findIndexType(ddl,typeGood);
+//        String addressStore = TABLE.getAddressStore(ddl,indexType);
         RPS.stopWatch();
-        LOGGER.info(String.valueOf(RPS.getTimeSecond()));
-        LOGGER.info(addressStore);
+        LOGGER.info("Время добавления записей в таблицу : {}",(RPS.getTimeSecond()));
+//        LOGGER.info("RPS : {}",(RPS.getRPS()));
+//        LOGGER.info(addressStore);
         ddl.closeStatement();
         closeConnection(connection);
     }

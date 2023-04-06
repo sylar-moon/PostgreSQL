@@ -791,14 +791,14 @@ false Zulu
     <database id="2" parent="1" name="myDB">
       <ObjectId>16402</ObjectId>
       <Owner>sylar</Owner>
-      <IntrospectionStateNumber>8646</IntrospectionStateNumber>
+      <IntrospectionStateNumber>20091</IntrospectionStateNumber>
       <Current>1</Current>
     </database>
     <database id="3" parent="1" name="postgres">
       <ObjectId>14717</ObjectId>
       <Comment>default administrative connection database</Comment>
       <Owner>sylar</Owner>
-      <IntrospectionStateNumber>6775</IntrospectionStateNumber>
+      <IntrospectionStateNumber>21728</IntrospectionStateNumber>
     </database>
     <database id="4" parent="1" name="rdsadmin">
       <ObjectId>16384</ObjectId>
@@ -939,7 +939,7 @@ UC/16400
 </Acl>
       <StateNumber>796</StateNumber>
       <Owner>sylar</Owner>
-      <IntrospectionStateNumber>8648</IntrospectionStateNumber>
+      <IntrospectionStateNumber>20093</IntrospectionStateNumber>
       <Current>1</Current>
     </schema>
     <extension id="30" parent="2" name="plpgsql">
@@ -1163,5 +1163,129 @@ UC/16400
       <HandlerId>335</HandlerId>
       <Type>index</Type>
     </access-method>
+    <table id="57" parent="29" name="brands">
+      <ObjectId>33313</ObjectId>
+      <Owner>sylar</Owner>
+      <StateNumber>9167</StateNumber>
+    </table>
+    <table id="58" parent="29" name="stores">
+      <ObjectId>33308</ObjectId>
+      <Owner>sylar</Owner>
+      <StateNumber>9169</StateNumber>
+    </table>
+    <table id="59" parent="29" name="types">
+      <ObjectId>33318</ObjectId>
+      <Owner>sylar</Owner>
+      <StateNumber>9167</StateNumber>
+    </table>
+    <column id="60" parent="57" name="id">
+      <Position>1</Position>
+      <DataType>integer|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9164</StateNumber>
+      <TypeId>23</TypeId>
+    </column>
+    <column id="61" parent="57" name="name_brand">
+      <Position>2</Position>
+      <DataType>varchar(40)|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9164</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="62" parent="57" name="brands_pk">
+      <ObjectId>33316</ObjectId>
+      <StateNumber>9164</StateNumber>
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Primary>1</Primary>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationIds>0</CollationIds>
+      <ClassIds>1978</ClassIds>
+    </index>
+    <key id="63" parent="57" name="brands_pk">
+      <ObjectId>33317</ObjectId>
+      <StateNumber>9164</StateNumber>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>brands_pk</UnderlyingIndexName>
+    </key>
+    <column id="64" parent="58" name="id">
+      <Position>1</Position>
+      <DataType>integer|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9163</StateNumber>
+      <TypeId>23</TypeId>
+    </column>
+    <column id="65" parent="58" name="city">
+      <Position>2</Position>
+      <DataType>varchar(20)|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9163</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <column id="66" parent="58" name="address">
+      <Position>3</Position>
+      <DataType>varchar(100)|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9163</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="67" parent="58" name="stores_pk">
+      <ObjectId>33311</ObjectId>
+      <StateNumber>9163</StateNumber>
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Primary>1</Primary>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationIds>0</CollationIds>
+      <ClassIds>1978</ClassIds>
+    </index>
+    <key id="68" parent="58" name="stores_pk">
+      <ObjectId>33312</ObjectId>
+      <StateNumber>9163</StateNumber>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>stores_pk</UnderlyingIndexName>
+    </key>
+    <column id="69" parent="59" name="id">
+      <Position>1</Position>
+      <DataType>integer|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9165</StateNumber>
+      <TypeId>23</TypeId>
+    </column>
+    <column id="70" parent="59" name="name_type">
+      <Position>2</Position>
+      <DataType>varchar(40)|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>9165</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="71" parent="59" name="types_pk">
+      <ObjectId>33321</ObjectId>
+      <StateNumber>9165</StateNumber>
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+      <Primary>1</Primary>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationIds>0</CollationIds>
+      <ClassIds>1978</ClassIds>
+    </index>
+    <index id="72" parent="59" name="name_type">
+      <ObjectId>33323</ObjectId>
+      <StateNumber>9166</StateNumber>
+      <ColNames>name_type</ColNames>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationIds>100</CollationIds>
+      <CollationNames>default</CollationNames>
+      <ClassIds>3126</ClassIds>
+    </index>
+    <key id="73" parent="59" name="types_pk">
+      <ObjectId>33322</ObjectId>
+      <StateNumber>9165</StateNumber>
+      <ColNames>id</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>types_pk</UnderlyingIndexName>
+    </key>
   </database-model>
 </dataSource>
