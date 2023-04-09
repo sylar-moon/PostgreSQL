@@ -10,10 +10,6 @@ import org.postgresql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-
-/**
- * Hello world!
- */
 public class App {
     private static final Logger LOGGER = new MyLogger().getLogger();
     private static final MyProperties PROPERTIES = new MyProperties();
@@ -35,17 +31,16 @@ public class App {
         RPS rpsStoreGood = TABLE.fillStoreGoodTable(connection,rpsGoods.getCount());
         RPS.startWatch();
         String addressStore = TABLE.getAddressStore(connection,indexType);
-        LOGGER.info("Время поиска магазина : {}", RPS.getTimeSecond());
-        LOGGER.info("Время заполнения таблиц магазинами, брендами и типами  : {}",(rpsFillTables.getTimeSecond()));
-        LOGGER.info("RPS заполнения таблиц магазинами, брендами и типами  : {}",(rpsFillTables.getRPS()));
-        LOGGER.info("Время заполнения таблицы с товарами : {}",(rpsGoods.getTimeSecond()));
-        LOGGER.info("Количество добавленых товаров : {}",(rpsGoods.getCount()));
-        LOGGER.info("RPS заполнения таблицы с товарами : {}",(rpsGoods.getRPS()));
-        LOGGER.info("Время заполнения таблицы с товарами и магазинами : {}",(rpsStoreGood.getTimeSecond()));
-        LOGGER.info("RPS заполнения таблицы с товарами и магазинами : {}",(rpsStoreGood.getTimeSecond()));
-        LOGGER.info(addressStore);
-        LOGGER.info("Общее время выполнения программы : {}", RPS.getTimeSecond());
+        LOGGER.info("Store search time : {}", RPS.getTimeSecond());
+        LOGGER.info("Time to fill tables with stores, brands and types  : {}",(rpsFillTables.getTimeSecond()));
+        LOGGER.info("Time to fill the table with goods : {}",(rpsGoods.getTimeSecond()));
+        LOGGER.info("Number of added goods : {}",(rpsGoods.getCount()));
+        LOGGER.info("RPS of filling the table with goods : {}",(rpsGoods.getRPS()));
+        LOGGER.info("Time to complete the table with goods and shops: {}",(rpsStoreGood.getTimeSecond()));
+        LOGGER.info("RPS filling the table with goods and shops : {}",(rpsStoreGood.getRPS()));
+        LOGGER.info("Number of rows in the table with goods and products : {}",(rpsStoreGood.getCount()));
 
+        LOGGER.info(addressStore);
         RPS.stopWatch();
 
         closeConnection(connection);
