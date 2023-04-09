@@ -25,21 +25,29 @@ public class App {
         String userName = PROPERTIES.getProperty("userName");
         String password = PROPERTIES.getProperty("password");
         int countGoods =Integer.parseInt(PROPERTIES.getProperty("countGoods"));
-        String typeGood = args.length!=0?args[0]:"randomType";
+        String typeGood = args.length!=0?args[0]:"firstType";
         Connection connection = createConnection(endPoint,userName,password);
-        DDLScript ddl = createDDLScript(connection);
-        TABLE.createTables(ddl);
-//        TABLE.fillTables(connection);
-        RPS.startWatch();
 
-        TABLE.fillGoodsTable(connection,ddl,countGoods);
-//        int indexType = TABLE.findIndexType(ddl,typeGood);
-//        String addressStore = TABLE.getAddressStore(ddl,indexType);
+        TABLE.createTables(connection);
+        RPS rpsFillTables = TABLE.fillTablesAndGetRPS(connection);
+        RPS rpsGoods = TABLE.fillGoodsTableAndGetRPS(connection,countGoods);
+        int indexType = TABLE.findIndexType(connection,typeGood);
+        RPS rpsStoreGood = TABLE.fillStoreGoodTable(connection,rpsGoods.getCount());
+        RPS.startWatch();
+        String addressStore = TABLE.getAddressStore(connection,indexType);
+        LOGGER.info("Время поиска магазина : {}", RPS.getTimeSecond());
+        LOGGER.info("Время заполнения таблиц магазинами, брендами и типами  : {}",(rpsFillTables.getTimeSecond()));
+        LOGGER.info("RPS заполнения таблиц магазинами, брендами и типами  : {}",(rpsFillTables.getRPS()));
+        LOGGER.info("Время заполнения таблицы с товарами : {}",(rpsGoods.getTimeSecond()));
+        LOGGER.info("Количество добавленых товаров : {}",(rpsGoods.getCount()));
+        LOGGER.info("RPS заполнения таблицы с товарами : {}",(rpsGoods.getRPS()));
+        LOGGER.info("Время заполнения таблицы с товарами и магазинами : {}",(rpsStoreGood.getTimeSecond()));
+        LOGGER.info("RPS заполнения таблицы с товарами и магазинами : {}",(rpsStoreGood.getTimeSecond()));
+        LOGGER.info(addressStore);
+        LOGGER.info("Общее время выполнения программы : {}", RPS.getTimeSecond());
+
         RPS.stopWatch();
-        LOGGER.info("Время добавления записей в таблицу : {}",(RPS.getTimeSecond()));
-//        LOGGER.info("RPS : {}",(RPS.getRPS()));
-//        LOGGER.info(addressStore);
-        ddl.closeStatement();
+
         closeConnection(connection);
     }
 
@@ -51,18 +59,6 @@ public class App {
             LOGGER.error("Unable to close connection",e);
         }
     }
-
-    private static DDLScript createDDLScript(Connection connection) {
-        try {
-            return  new DDLScript(connection);
-        } catch (SQLException e) {
-            LOGGER.error("Unable to create statement",e);
-            System.exit(0);
-        }
-        return null;
-
-    }
-
 
     private static Connection createConnection(String endPoint, String userName, String password) {
         try {

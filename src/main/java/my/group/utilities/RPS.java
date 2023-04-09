@@ -19,7 +19,8 @@ public class RPS {
     public long getTimeSecond() {
         return watch.getTime(TimeUnit.SECONDS);
     }
-    public void resetWatch(){
+
+    public void resetWatch() {
         watch.reset();
     }
 
@@ -33,6 +34,10 @@ public class RPS {
 
     public int getCount() {
         return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
 }
