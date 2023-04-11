@@ -20,10 +20,6 @@ public class RPS {
         return watch.getTime(TimeUnit.SECONDS);
     }
 
-    public void resetWatch() {
-        watch.reset();
-    }
-
     public void stopWatch() {
         watch.stop();
     }
@@ -34,10 +30,6 @@ public class RPS {
 
     public int getCount() {
         return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
     }
 
 }

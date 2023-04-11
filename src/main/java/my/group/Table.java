@@ -84,6 +84,7 @@ public class Table {
         Supplier<Stream<Good>> supplier = () -> new GoodFactory().creatRandomGood(countTypes, countBrands);
         String sql = "INSERT INTO goods(id,name_goods,types_id,brands_id) VALUES (?,?,?,?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
             int counter = 0;
             while (counter != countGoods) {
                 counter++;
@@ -113,7 +114,7 @@ public class Table {
      * Fills in the table with shops and goods
      *
      * @param connection database connection
-     * @param sizeGoods quantity
+     * @param sizeGoods  quantity
      * @return rps with time and number of iterations
      */
     public RPS fillStoreGoodTable(Connection connection, int sizeGoods) {
@@ -145,11 +146,11 @@ public class Table {
         for (int i = 1; i < countStoresWithGood + 1; i++) {
             statement.setInt(1, i);
             statement.setInt(2, sizeGoods);
-            statement.setInt(3, i*i);
+            statement.setInt(3, i * i);
             statement.addBatch();
             rps.incrementCount();
         }
-        logger.info("Good with index {} delivered to the stores!",sizeGoods);
+        logger.info("Good with index {} delivered to the stores!", sizeGoods);
     }
 
     private Good getGood(Supplier<Stream<Good>> supplier) {
@@ -179,7 +180,7 @@ public class Table {
      * Finds the number of rows in a table
      *
      * @param connection database connection
-     * @param tableName table name
+     * @param tableName  table name
      * @return number of rows
      */
     public int getCountTable(Connection connection, String tableName) {
@@ -191,7 +192,7 @@ public class Table {
      * Finds the product type index
      *
      * @param connection database connection
-     * @param typeGood Product type name
+     * @param typeGood   Product type name
      * @return item type index
      */
     public int findIndexType(Connection connection, String typeGood) {
@@ -208,7 +209,7 @@ public class Table {
      * Finds the address of the store with the most goods of a certain type using sql query
      *
      * @param connection database connection
-     * @param indexType index of product type to search
+     * @param indexType  index of product type to search
      * @return store address
      */
     public String getAddressStore(Connection connection, int indexType) {

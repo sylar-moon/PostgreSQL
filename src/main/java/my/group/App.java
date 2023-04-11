@@ -58,6 +58,7 @@ public class App {
     private static Connection createConnection(String endPoint, String userName, String password) {
         try {
             Class<Driver> driverClass =Driver.class;
+
             return DriverManager.getConnection(endPoint,userName,password);
         } catch (SQLException e) {
             LOGGER.error("Unable to create database connection",e);
@@ -74,5 +75,4 @@ public class App {
             LOGGER.error("Properties file not found");
         }
     }
-
 }

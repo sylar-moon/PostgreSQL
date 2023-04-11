@@ -7,8 +7,8 @@ public class Good {
     private int typeId;
     private int brandId;
 
-    public Good(String good_name, int typeId, int brandId) {
-        this.goodName = good_name;
+    public Good(String goodName, int typeId, int brandId) {
+        this.goodName = goodName;
         this.typeId = typeId;
         this.brandId = brandId;
     }
