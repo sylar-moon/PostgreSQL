@@ -31,14 +31,12 @@ public class Table {
     public RPS fillTablesAndGetRPS(Connection connection) {
         RPS rps = new RPS();
         rps.startWatch();
-        String sqlForStore = "INSERT INTO stores(id,city,address) VALUES (?,?,?)";
+        String sqlForStore = "INSERT INTO store(id,city,address) VALUES (?,?,?)";
         fillTable(connection, "stores.csv", sqlForStore);
 
-        String sqlForType = "INSERT INTO types(id,name_type) VALUES (?,?)";
+        String sqlForType = "INSERT INTO type(id,name_type) VALUES (?,?)";
         fillTable(connection, "types.csv", sqlForType);
 
-        String sqlForBrand = "INSERT INTO brands(id,name_brand) VALUES (?,?)";
-        fillTable(connection, "brands.csv", sqlForBrand);
         rps.stopWatch();
         return rps;
     }
@@ -79,10 +77,9 @@ public class Table {
     public RPS fillGoodsTableAndGetRPS(Connection connection, int countGoods) {
         RPS rps = new RPS();
         rps.startWatch();
-        int countTypes = getCountTable(connection, "types");
-        int countBrands = getCountTable(connection, "brands");
-        Supplier<Stream<Good>> supplier = () -> new GoodFactory().creatRandomGood(countTypes, countBrands);
-        String sql = "INSERT INTO goods(id,name_goods,types_id,brands_id) VALUES (?,?,?,?)";
+        int countTypes = getCountTable(connection, "type");
+        Supplier<Stream<Good>> supplier = () -> new GoodFactory().creatRandomGood(countTypes);
+        String sql = "INSERT INTO good(id,name_good,type_id) VALUES (?,?,?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             connection.setAutoCommit(false);
             int counter = 0;
@@ -94,7 +91,6 @@ public class Table {
                     statement.setInt(1, rps.getCount());
                     statement.setString(2, good.getGoodName());
                     statement.setInt(3, good.getTypeId());
-                    statement.setInt(4, good.getBrandId());
                     statement.addBatch();
                     if (rps.getCount() % SIZE_BATCH == 0) {
                         statement.executeBatch();
@@ -120,8 +116,8 @@ public class Table {
     public RPS fillStoreGoodTable(Connection connection, int sizeGoods) {
         RPS rps = new RPS();
         rps.startWatch();
-        int countStores = getCountTable(connection, "stores");
-        String sql = "INSERT INTO store_good(stores_id,goods_id,goods_quantity) VALUES (?,?,?)";
+        int countStores = getCountTable(connection, "store");
+        String sql = "INSERT INTO store_good(store_id,good_id,good_quantity) VALUES (?,?,?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             while (sizeGoods != 0) {
                 int randomNumbStore = random.nextInt(countStores);
@@ -200,7 +196,7 @@ public class Table {
             return 1;
         }
         String sql = "SELECT id " +
-                "FROM types" +
+                "FROM type" +
                 " WHERE name_type = '" + typeGood + "'";
         return Integer.parseInt(ddlScript.executeQuery(connection, sql, "id"));
     }
@@ -213,16 +209,16 @@ public class Table {
      * @return store address
      */
     public String getAddressStore(Connection connection, int indexType) {
-        String sql1 = "SELECT store_good.stores_id, SUM(store_good.goods_quantity) AS total_quantity\n" +
+        String sql1 = "SELECT store_good.store_id, SUM(store_good.good_quantity) AS total_quantity\n" +
                 "FROM store_good\n" +
-                "INNER JOIN goods ON store_good.goods_id = goods.id\n" +
-                "WHERE goods.types_id = " + indexType + "\n" +
-                "GROUP BY store_good.stores_id\n" +
+                "INNER JOIN good ON store_good.good_id = good.id\n" +
+                "WHERE good.type_id = " + indexType + "\n" +
+                "GROUP BY store_good.store_id\n" +
                 "ORDER BY total_quantity DESC\n" +
                 "LIMIT 1;";
-        int idStore = Integer.parseInt(ddlScript.executeQuery(connection, sql1, "stores_id"));
+        int idStore = Integer.parseInt(ddlScript.executeQuery(connection, sql1, "store_id"));
         String sql2 = "SELECT address, city " +
-                "FROM stores " +
+                "FROM store " +
                 "WHERE id =" + idStore;
         return ddlScript.executeQuery(connection, sql2, "city") + ", " +
                 ddlScript.executeQuery(connection, sql2, "address");

@@ -20,6 +20,10 @@ public class RPS {
         return watch.getTime(TimeUnit.SECONDS);
     }
 
+    public long getTimeMilliSecond() {
+        return watch.getTime(TimeUnit.MILLISECONDS);
+    }
+
     public void stopWatch() {
         watch.stop();
     }
