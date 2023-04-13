@@ -136,6 +136,10 @@
                 <manifestEntries>
                   <Class-Path>config.properties</Class-Path>
                   <Class-Path>logback.xml</Class-Path>
+                  <Class-Path>brands.csv</Class-Path>
+                  <Class-Path>createTables.sql</Class-Path>
+                  <Class-Path>stores.csv</Class-Path>
+                  <Class-Path>types.csv</Class-Path>
                 </manifestEntries>
               </archive>
             </configuration>

@@ -8,8 +8,10 @@ import my.group.utilities.MyValidator;
 import my.group.utilities.RPS;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -22,27 +24,31 @@ public class Table {
     private final Logger logger = new MyLogger().getLogger();
     private final MyValidator validator = new MyValidator();
     private final Random random = new Random();
-    private final RPS rps = new RPS();
-    void fillTables(Connection connection) {
-        String sqlForStore = "INSERT INTO stores(id,city,address) VALUES (?,?,?)";
+    private final DDLScript ddlScript = new DDLScript();
+    private static final String PATH = "createTables.sql";
+    public static final int SIZE_BATCH = 1000;
+
+    public RPS fillTablesAndGetRPS(Connection connection) {
+        RPS rps = new RPS();
+        rps.startWatch();
+        String sqlForStore = "INSERT INTO store(id,city,address) VALUES (?,?,?)";
         fillTable(connection, "stores.csv", sqlForStore);
 
-        String sqlForType = "INSERT INTO types(id,name_type) VALUES (?,?)";
+        String sqlForType = "INSERT INTO type(id,name_type) VALUES (?,?)";
         fillTable(connection, "types.csv", sqlForType);
 
-        String sqlForBrand = "INSERT INTO brands(id,name_brand) VALUES (?,?)";
-        fillTable(connection, "brands.csv", sqlForBrand);
+        rps.stopWatch();
+        return rps;
     }
 
 
-    /**
-     * Заполняет таблицу базы данных строками из csv файла
+    /***
+     * Fills a database table with rows from a csv file
      *
-     * @param connection подключение к базе данных
-     * @param path       путь к csv файлу
-     * @param sql        sql запроз на добавление строки в таблицу
-     */
-    public void fillTable(Connection connection, String path, String sql) {
+     * @param connection database connection
+     * @param path path to csv file
+     * @param sql sql query to add row to table*/
+    private void fillTable(Connection connection, String path, String sql) {
         try (CSVReader reader = new CSVReader(new FileReader(path));
              PreparedStatement statement = connection.prepareStatement(sql)) {
             //В цикле считуем все строки из csv файла и добавляем в базу данных с помощью запроса sql
@@ -61,54 +67,86 @@ public class Table {
         }
     }
 
-    public void fillGoodsTable(Connection connection, DDLScript ddl, int countGoods) {
+    /**
+     * Fills in the table with goods
+     *
+     * @param connection database connection
+     * @param countGoods number of goods
+     * @return rps with time and number of iterations
+     */
+    public RPS fillGoodsTableAndGetRPS(Connection connection, int countGoods) {
+        RPS rps = new RPS();
         rps.startWatch();
-        int idCounter = 0;
-        int countTypes = getCountTable(ddl, "types");
-        int countBrands = getCountTable(ddl, "brands");
-        int countStores = getCountTable(ddl, "stores");
-        Supplier<Stream<Good>> supplier = () -> new GoodFactory().creatRandomGood(countTypes, countBrands);
-        String sql = "INSERT INTO goods(id,name_goods,types_id,brands_id) VALUES (?,?,?,?)";
+        int countTypes = getCountTable(connection, "type");
+        Supplier<Stream<Good>> supplier = () -> new GoodFactory().creatRandomGood(countTypes);
+        String sql = "INSERT INTO good(id,name_good,type_id) VALUES (?,?,?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
             int counter = 0;
             while (counter != countGoods) {
-                rps.incrementCount();
                 counter++;
                 Good good = getGood(supplier);
                 if (validator.validateGood(good)) {
-                    idCounter++;
-                    statement.setInt(1, idCounter);
+                    rps.incrementCount();
+                    statement.setInt(1, rps.getCount());
                     statement.setString(2, good.getGoodName());
                     statement.setInt(3, good.getTypeId());
-                    statement.setInt(4, good.getBrandId());
-                    statement.executeUpdate();
-                    deliverToStores(connection, countStores, idCounter);
+                    statement.addBatch();
+                    if (rps.getCount() % SIZE_BATCH == 0) {
+                        statement.executeBatch();
+                    }
                 }
             }
+            statement.executeBatch();
         } catch (SQLException e) {
             logger.error("Unable to fill goods table with sql query: {}", sql, e);
         }
         rps.stopWatch();
         logger.info(String.valueOf(rps.getRPS()));
-
+        return rps;
     }
 
-    //Разобраться с подсчетом товаров в магазинах
-    private void deliverToStores(Connection connection, int countStores, int idGood) {
-        int randomCount = random.nextInt(countStores);
-        int countStoresWithGood = randomCount == 0 ? 1 : randomCount;
-        int firstIdStoreWithGood = random.nextInt(countStores - countStoresWithGood) + 1;
-        String sql = "INSERT INTO store_good(stores_id,goods_id) VALUES (?,?)";
+    /**
+     * Fills in the table with shops and goods
+     *
+     * @param connection database connection
+     * @param sizeGoods  quantity
+     * @return rps with time and number of iterations
+     */
+    public RPS fillStoreGoodTable(Connection connection, int sizeGoods) {
+        RPS rps = new RPS();
+        rps.startWatch();
+        int countStores = getCountTable(connection, "store");
+        String sql = "INSERT INTO store_good(store_id,good_id,good_quantity) VALUES (?,?,?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            for (int i = firstIdStoreWithGood; i < countStoresWithGood + firstIdStoreWithGood; i++) {
-                statement.setInt(1, i);
-                statement.setInt(2, idGood);
-                statement.addBatch();
+            while (sizeGoods != 0) {
+                int randomNumbStore = random.nextInt(countStores);
+                //Number of shops with goods
+                int countStoresWithGood = randomNumbStore == 0 ? 1 : randomNumbStore;
+                deliverToStores(sizeGoods, rps, statement, countStoresWithGood);
+                if (rps.getCount() % SIZE_BATCH == 0) {
+                    statement.executeBatch();
+                }
+                sizeGoods--;
             }
             statement.executeBatch();
         } catch (SQLException e) {
             logger.error("Unable to fill store_good table with sql query: {}", sql, e);
         }
+        rps.stopWatch();
+        return rps;
+    }
+
+
+    private void deliverToStores(int sizeGoods, RPS rps, PreparedStatement statement, int countStoresWithGood) throws SQLException {
+        for (int i = 1; i < countStoresWithGood + 1; i++) {
+            statement.setInt(1, i);
+            statement.setInt(2, sizeGoods);
+            statement.setInt(3, i * i);
+            statement.addBatch();
+            rps.incrementCount();
+        }
+        logger.info("Good with index {} delivered to the stores!", sizeGoods);
     }
 
     private Good getGood(Supplier<Stream<Good>> supplier) {
@@ -117,85 +155,72 @@ public class Table {
     }
 
     /**
-     * С помощью sql запросов создаем 5 таблиц :
-     * stores,brands,types,goods and store_good
+     * Extracts queries from sql file and creates tables in the database
      *
-     * @param ddl ddl script для передачи sql запроса
+     * @param connection database connection
      */
-    public void createTables(DDLScript ddl) {
-        ddl.executeUpdate("CREATE TABLE stores (\n" +
-                "  id INT,\n" +
-                "  city VARCHAR(20) NOT NULL,\n" +
-                "  address VARCHAR(100) NOT NULL,\n" +
-                "  CONSTRAINT stores_pk PRIMARY KEY (id)\n" +
-                ")");
-
-        ddl.executeUpdate("CREATE TABLE brands (\n" +
-                "  id INT,\n" +
-                "  name_brand VARCHAR(40) NOT NULL,\n" +
-                "  CONSTRAINT brands_pk PRIMARY KEY (id)\n" +
-                ")");
-
-        ddl.executeUpdate("CREATE TABLE types (\n" +
-                "  id INT,\n" +
-                "  name_type VARCHAR(40) NOT NULL,\n" +
-                "  CONSTRAINT types_pk PRIMARY KEY (id)\n" +
-                ")");
-        ddl.executeUpdate("CREATE INDEX name_type ON types (name_type)");
-
-
-        ddl.executeUpdate("CREATE TABLE goods (\n" +
-                "  id INT,\n" +
-                "  name_goods VARCHAR(40) NOT NULL,\n" +
-                "  types_id INT NOT NULL,\n" +
-                "  brands_id INT NOT NULL,\n" +
-                "  FOREIGN KEY(types_id) REFERENCES types(id),\n" +
-                "  FOREIGN KEY(brands_id) REFERENCES brands(id),\n" +
-                "  CONSTRAINT goods_pk PRIMARY KEY (id)\n" +
-                ")");
-        ddl.executeUpdate("CREATE INDEX types_id ON goods (types_id)");
-
-        ddl.executeUpdate("CREATE TABLE store_good" +
-                "  (stores_id INT NOT NULL,\n" +
-                "  goods_id INT NOT NULL,\n" +
-                "  FOREIGN KEY(stores_id) REFERENCES stores(id),\n" +
-                "  FOREIGN KEY(goods_id) REFERENCES goods(id))"
-               );
-        ddl.executeUpdate("CREATE INDEX stores_id ON store_good (stores_id)");
-        ddl.executeUpdate("CREATE INDEX goods_id ON store_good (goods_id)");
-
+    public void createTables(Connection connection) {
+        try {
+            File file = new File(PATH);
+            String queries = new String(Files.readAllBytes(file.toPath()));
+            String[] queriesArr = queries.split(";");
+            for (String s : queriesArr) {
+                ddlScript.executeUpdate(connection, s);
+            }
+        } catch (IOException e) {
+            logger.error("Unable to create tables from queries in file: {}", PATH, e);
+        }
     }
 
-    public int getCountTable(DDLScript ddl, String tableName) {
+    /**
+     * Finds the number of rows in a table
+     *
+     * @param connection database connection
+     * @param tableName  table name
+     * @return number of rows
+     */
+    public int getCountTable(Connection connection, String tableName) {
         String sql = "SELECT COUNT(*) AS row_count FROM " + tableName;
-        return Integer.parseInt(ddl.executeQuery(sql,"row_count")) ;
+        return Integer.parseInt(ddlScript.executeQuery(connection, sql, "row_count"));
     }
 
-
-    public int findIndexType(DDLScript ddl, String typeGood) {
-        if (typeGood.equals("randomType")) {
-            int countTypes = getCountTable(ddl, "types");
-            return random.nextInt(countTypes) + 1;
+    /**
+     * Finds the product type index
+     *
+     * @param connection database connection
+     * @param typeGood   Product type name
+     * @return item type index
+     */
+    public int findIndexType(Connection connection, String typeGood) {
+        if (typeGood.equals("firstType")) {
+            return 1;
         }
         String sql = "SELECT id " +
-                "FROM types" +
+                "FROM type" +
                 " WHERE name_type = '" + typeGood + "'";
-       return Integer.parseInt(ddl.executeQuery(sql,"id")) ;
-
+        return Integer.parseInt(ddlScript.executeQuery(connection, sql, "id"));
     }
 
-    public String getAddressStore(DDLScript ddl, int indexType) {
-    String sql1 = "SELECT store_good.stores_id, COUNT(*) AS count \n" +
-            "FROM store_good \n" +
-            "INNER JOIN goods ON store_good.goods_id = goods.id\n" +
-            "WHERE goods.types_id = " + indexType+
-            "GROUP BY store_good.stores_id \n" +
-            "ORDER BY count DESC \n" +
-            "LIMIT 1;";
-    int idStore = Integer.parseInt(ddl.executeQuery(sql1,"stores_id"));
-    String sql2 = "SELECT address " +
-            "FROM stores " +
-            "WHERE id ="+ idStore;
-        return ddl.executeQuery(sql2,"address");
+    /**
+     * Finds the address of the store with the most goods of a certain type using sql query
+     *
+     * @param connection database connection
+     * @param indexType  index of product type to search
+     * @return store address
+     */
+    public String getAddressStore(Connection connection, int indexType) {
+        String sql1 = "SELECT store_good.store_id, SUM(store_good.good_quantity) AS total_quantity\n" +
+                "FROM store_good\n" +
+                "INNER JOIN good ON store_good.good_id = good.id\n" +
+                "WHERE good.type_id = " + indexType + "\n" +
+                "GROUP BY store_good.store_id\n" +
+                "ORDER BY total_quantity DESC\n" +
+                "LIMIT 1;";
+        int idStore = Integer.parseInt(ddlScript.executeQuery(connection, sql1, "store_id"));
+        String sql2 = "SELECT address, city " +
+                "FROM store " +
+                "WHERE id =" + idStore;
+        return ddlScript.executeQuery(connection, sql2, "city") + ", " +
+                ddlScript.executeQuery(connection, sql2, "address");
     }
 }

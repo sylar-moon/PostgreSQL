@@ -17,7 +17,7 @@ public class MyValidator {
     public boolean validateGood(Good good) {
         Set<ConstraintViolation<Good>> violation = VALIDATOR.validate(good);
         if (!violation.isEmpty()) {
-            LOGGER.info("This good is invalid:{}", good.getGoodName());
+            LOGGER.info("This good name is empty");
             return false;
         } else {
             return true;

@@ -14,6 +14,10 @@
       <includes>
         <include>config.properties</include>
         <include>logback.xml</include>
+		<include>brands.csv</include>
+        <include>createTables.sql</include>
+        <include>stores.csv</include>
+        <include>types.csv</include>
         <include>NOTICE*</include>
       </includes>
     </fileSet>    
